@@ -218,10 +218,10 @@ int main() {
     char currentRoom = "Spawn Room";
 
     printf("Welcome to the game!\n");
-    printf("You are in the %s\n", spawnRoom.description);
+    printf(spawnRoom.description);
     printf("You can go north, south, east, or west.\n");
     printf("Type 'inventory' to access your inventory.\n");
-    printf('When in the inventory, type an item name to inspect it or type "combine" to\n');
+    //printf('When in the inventory, type an item name to inspect it or type "combine" to \n');
 
 
 
