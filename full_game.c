@@ -440,7 +440,7 @@ void InteractWith(Room *currentRoom, Inventory *inv, const char *objectName)
                 return;
             }
             // --- CHEST LOGIC ---
-            else if (strcmp(objectName, "Chest") == 0)
+            else if (stricmp(objectName, "Chest") == 0)
             {
                 // Check if jaguar has been satisfied
                 bool jaguarSatisfied = false;
@@ -453,38 +453,48 @@ void InteractWith(Room *currentRoom, Inventory *inv, const char *objectName)
                     }
                 }
 
-                // Use a file-scope static variable to track if key part has been shown
-                static bool keyPartRevealed = false;
-                // Track if key has been taken separately
+                // Use static flag for this function only
                 static bool keyPartTaken = false;
 
                 if (jaguarSatisfied)
                 {
-                    if (!keyPartRevealed)
+                    if (!keyPartTaken)
                     {
                         printf("You open the chest and find the first part of a golden key!\n");
-                        printf("You can now take the key part.\n");
-
-                        // Create the key part and add it to the room
-                        Item *keyPart = CreateItem("Key Part 1", 1,
-                                                   "The first part of a three-part golden key.",
-                                                   true, "Key Part 2", "Combined Key Parts");
-
-                        // Add to room instead of inventory
-                        AddItemToRoom(currentRoom, keyPart);
-                        keyPartRevealed = true;
-
-                        // Update chest description
-                        strcpy(currentRoom->interactables[i]->description,
-                               "An open chest. The key part is available to take.");
-                    }
-                    else if (keyPartTaken)
-                    {
-                        printf("The chest is empty. You've already taken the key part.\n");
+                        
+                        // Check if there's space in inventory
+                        if (inv->count < inv->capacity)
+                        {
+                            // Add key part directly to inventory
+                            strcpy(inv->items[inv->count].name, "Key Part 1");
+                            strcpy(inv->items[inv->count].description, "The first part of a three-part golden key.");
+                            inv->items[inv->count].quantity = 1;
+                            inv->items[inv->count].isCombinable = true;
+                            strcpy(inv->items[inv->count].combineWith, "Key Part 2");
+                            strcpy(inv->items[inv->count].resultItem, "Combined Key Parts");
+                            inv->count++;
+                            
+                            printf("You automatically take the key part and put it in your inventory.\n");
+                            
+                            // Update chest description
+                            strcpy(currentRoom->interactables[i]->description,
+                                "An open chest. You've already taken the key part.");
+                            
+                            keyPartTaken = true;
+                        }
+                        else
+                        {
+                            printf("Your inventory is full! You can't take the key part.\n");
+                            // Create the key part and add it to the room instead
+                            Item *keyPart = CreateItem("Key Part 1", 1,
+                                                "The first part of a three-part golden key.",
+                                                true, "Key Part 2", "Combined Key Parts");
+                            AddItemToRoom(currentRoom, keyPart);
+                        }
                     }
                     else
                     {
-                        printf("The chest is open, revealing the first part of a golden key. You can take it.\n");
+                        printf("The chest is empty. You've already taken the key part.\n");
                     }
                 }
                 else
@@ -494,7 +504,7 @@ void InteractWith(Room *currentRoom, Inventory *inv, const char *objectName)
                 return;
             }
             // --- TREE LOGIC ---
-            else if (strcmp(objectName, "Tree") == 0)
+            else if (stricmp(objectName, "Tree") == 0)
             {
                 // Check if jaguar has been satisfied first
                 bool jaguarSatisfied = false;
@@ -507,9 +517,7 @@ void InteractWith(Room *currentRoom, Inventory *inv, const char *objectName)
                     }
                 }
 
-                // Use a file-scope static variable for tracking if keycard revealed
-                static bool keycardRevealed = false;
-                // Track if keycard has been taken separately
+                // Use static flag for this function only
                 static bool keycardTaken = false;
 
                 if (!jaguarSatisfied)
@@ -518,32 +526,44 @@ void InteractWith(Room *currentRoom, Inventory *inv, const char *objectName)
                     return;
                 }
 
-                if (!keycardRevealed)
+                if (!keycardTaken)
                 {
                     printf("With the jaguar out of the way, you can now examine the tree more closely...\n");
                     printf("There's something shiny embedded in the trunk. It looks like a keycard!\n");
-                    printf("You can now take the keycard.\n");
-
-                    // Create keycard and add it to the room
-                    Item *keycard = CreateItem("Keycard", 1,
+                    
+                    // Check if there's space in inventory
+                    if (inv->count < inv->capacity)
+                    {
+                        // Add keycard directly to inventory
+                        strcpy(inv->items[inv->count].name, "Keycard");
+                        strcpy(inv->items[inv->count].description, "A high-tech keycard that can unlock electronic doors.");
+                        inv->items[inv->count].quantity = 1;
+                        inv->items[inv->count].isCombinable = false;
+                        strcpy(inv->items[inv->count].combineWith, "");
+                        strcpy(inv->items[inv->count].resultItem, "");
+                        inv->count++;
+                        
+                        printf("You automatically take the keycard and put it in your inventory.\n");
+                        
+                        // Update tree description
+                        strcpy(currentRoom->interactables[i]->description,
+                               "An unusual tree with metal components embedded in its trunk. You've already taken the keycard.");
+                        
+                        keycardTaken = true;
+                    }
+                    else
+                    {
+                        printf("Your inventory is full! You can't take the keycard.\n");
+                        // Create keycard and add it to the room instead
+                        Item *keycard = CreateItem("Keycard", 1,
                                                "A high-tech keycard that can unlock electronic doors.",
                                                false, "", "");
-
-                    // Add keycard to room instead of inventory
-                    AddItemToRoom(currentRoom, keycard);
-                    keycardRevealed = true;
-
-                    // Update tree description
-                    strcpy(currentRoom->interactables[i]->description,
-                           "An unusual tree with metal components embedded in its trunk. A keycard is visible in the trunk.");
-                }
-                else if (keycardTaken)
-                {
-                    printf("You already took the keycard from the tree.\n");
+                        AddItemToRoom(currentRoom, keycard);
+                    }
                 }
                 else
                 {
-                    printf("The tree trunk has a keycard embedded in it. You can take it.\n");
+                    printf("You already took the keycard from the tree.\n");
                 }
                 return;
             }
