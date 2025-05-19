@@ -80,6 +80,6 @@ Game logs will be saved in `game_log.txt`.
 This game is free to use, modify, and distribute. If you enjoy the game, consider giving credit to the original creators (SALOME SHIOSHVILI, ALEJANDRO ZAPATA PINTO, LORENZO DE BARROS COELHO HOFFMANN, MOHAMED ABDELHADI MOUMENI).
 
 ## AI Disclaimer
-Some parts of this project, such as handling multi-word names (e.g., "rusty cog", "metal door"), were refined with the assistance of AI tools. The AI helped generate a checker loop that validates the order of words in these names, ensuring that commands are parsed correctly. These contributions were used solely to fix specific issues in our existing code rather than to create the project from scratch. Every effort was made to ensure accuracy and quality.
+Very limited parts of this project, such as handling multi-word names (e.g., "rusty cog", "metal door"), were modified with the assistance of AI tools. The AI helped generate a checker loop that validates the order of words in these names, ensuring that commands are parsed correctly. These contributions were used solely to fix specific issues in our existing code rather than to create the project from scratch. Every effort was made to ensure accuracy and quality.
 
 Enjoy the adventure! 🗝️✨
