@@ -1,1 +1,39 @@
-[2025-05-19 18:01:59] quit: Quit game
+[2025-05-19 21:55:22] east: Moved east to Engine Room
+[2025-05-19 21:55:25] push crate: Pushed crate, revealed rucksack
+[2025-05-19 21:55:30] take rucksack: Attempted to take rucksack
+[2025-05-19 21:55:32] i: Displayed inventory
+[2025-05-19 21:55:34] west: Moved west to Entrance Hall
+[2025-05-19 21:55:35] south: Moved south to Jungle Room
+[2025-05-19 21:55:42] interact jaguar: Interacted with jaguar
+[2025-05-19 21:55:46] interact chest: Interacted with chest
+[2025-05-19 21:55:54] interact tree: Interacted with tree
+[2025-05-19 21:55:56] i: Displayed inventory
+[2025-05-19 21:56:01] take rusty cog: Attempted to take rusty cog
+[2025-05-19 21:56:03] look: Looked around
+[2025-05-19 21:56:11] take suspicious fruit: Attempted to take suspicious fruit
+[2025-05-19 21:56:12] i: Displayed inventory
+[2025-05-19 21:56:20] north: Moved north to Entrance Hall
+[2025-05-19 21:56:24] use keycard: Used keycard on metal door
+[2025-05-19 21:56:28] west: Moved west to Cyber Room
+[2025-05-19 21:56:36] look: Looked around
+[2025-05-19 21:56:43] use rusty cog: Used rusty cog on glass pane
+[2025-05-19 21:56:47] take crowbar: Attempted to take crowbar
+[2025-05-19 21:56:49] east: Moved east to Entrance Hall
+[2025-05-19 21:57:04] use crowbar: Used crowbar on crate
+[2025-05-19 21:57:10] take key part 2: Attempted to take key part 2
+[2025-05-19 21:57:12] west: Moved west to Cyber Room
+[2025-05-19 21:57:20] use suspicious fruit: Used suspicious fruit on kitchen
+[2025-05-19 21:57:32] take anti-rust solution: Attempted to take anti-rust solution
+[2025-05-19 21:57:42] i: Displayed inventory
+[2025-05-19 21:57:56] combine anti-rust solution: Combined anti-rust solution with rusty cog
+[2025-05-19 21:57:57] i: Displayed inventory
+[2025-05-19 21:58:01] east: Moved east to Entrance Hall
+[2025-05-19 21:58:02] east: Moved east to Engine Room
+[2025-05-19 21:58:09] use clean cog: Used clean cog on machine
+[2025-05-19 21:58:15] take key part 3: Attempted to take key part 3
+[2025-05-19 21:58:30] combine key part 1: Combined key part 1 with key part 2
+[2025-05-19 21:58:44] combine combines key parts: Combined combines key parts with key part 3
+[2025-05-19 21:58:58] combine combined key parts: Combined combined key parts with key part 3
+[2025-05-19 21:59:01] west: Moved west to Entrance Hall
+[2025-05-19 21:59:13] use golden key: Used golden key on golden door
+[2025-05-19 21:59:15] north: Moved north to Gold Room
