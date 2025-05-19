@@ -1,1 +1,49 @@
-[2025-05-19 18:01:59] quit: Quit game
+[2025-05-19 23:22:37] look: Looked around
+[2025-05-19 23:22:41] take note: Attempted to take note
+[2025-05-19 23:22:48] examine note: Examined note
+[2025-05-19 23:22:51] drop note: Attempted to drop note
+[2025-05-19 23:22:53] east: Moved east to Engine Room
+[2025-05-19 23:22:55] look: Looked around
+[2025-05-19 23:23:01] interact crate: Interacted with crate
+[2025-05-19 23:23:04] push crate : Attempted to push crate 
+[2025-05-19 23:23:14] push crate: Pushed crate, revealed rucksack
+[2025-05-19 23:24:00] take rucksack: Attempted to take rucksack
+[2025-05-19 23:24:03] i: Displayed inventory
+[2025-05-19 23:24:09] interact machine: Interacted with machine
+[2025-05-19 23:24:14] west: Moved west to Entrance Hall
+[2025-05-19 23:24:16] south: Moved south to Jungle Room
+[2025-05-19 23:24:19] look: Looked around
+[2025-05-19 23:24:26] interact jaguar: Interacted with jaguar
+[2025-05-19 23:24:31] interact chest: Interacted with chest
+[2025-05-19 23:24:34] interact tree: Interacted with tree
+[2025-05-19 23:24:36] i: Displayed inventory
+[2025-05-19 23:24:38] look: Looked around
+[2025-05-19 23:24:42] take rusty cog: Attempted to take rusty cog
+[2025-05-19 23:24:50] take suspicious fruit: Attempted to take suspicious fruit
+[2025-05-19 23:24:57] north: Moved north to Entrance Hall
+[2025-05-19 23:25:03] use keycard: Used keycard on metal door
+[2025-05-19 23:25:05] west: Moved west to Cyber Room
+[2025-05-19 23:25:06] look: Looked around
+[2025-05-19 23:25:13] interact glass pane: Interacted with glass pane
+[2025-05-19 23:25:22] use rusty cog: Used rusty cog on glass pane
+[2025-05-19 23:25:27] take crowbar: Attempted to take crowbar
+[2025-05-19 23:25:37] use suspicious fruit: Used suspicious fruit on kitchen
+[2025-05-19 23:25:47] take anti-rust solution: Attempted to take anti-rust solution
+[2025-05-19 23:25:49] i: Displayed inventory
+[2025-05-19 23:26:14] combine rusty cog: Combined rusty cog with anti-rust solution
+[2025-05-19 23:26:16] i: Displayed inventory
+[2025-05-19 23:26:21] west: You can't go west from here.
+[2025-05-19 23:26:24] east: Moved east to Entrance Hall
+[2025-05-19 23:26:26] look: Looked around
+[2025-05-19 23:26:33] use crowbar: Used crowbar on crate
+[2025-05-19 23:26:40] take key part 2: Attempted to take key part 2
+[2025-05-19 23:26:44] east: Moved east to Engine Room
+[2025-05-19 23:26:50] use clean cog: Used clean cog on machine
+[2025-05-19 23:26:55] take key part 3: Attempted to take key part 3
+[2025-05-19 23:26:56] i: Displayed inventory
+[2025-05-19 23:27:10] combine key part 1: Combined key part 1 with key part 2
+[2025-05-19 23:27:29] combine combined key parts: Combined combined key parts with key part 3
+[2025-05-19 23:27:30] i: Displayed inventory
+[2025-05-19 23:27:34] west: Moved west to Entrance Hall
+[2025-05-19 23:27:44] use golden key: Used golden key on golden door
+[2025-05-19 23:27:47] north: Moved north to Gold Room
