@@ -94,7 +94,7 @@ void StartInventory(Inventory *inv)
     inv->items = (Item *)malloc(sizeof(Item) * inv->capacity);
     if (inv->items == NULL)
     {
-        fprintf(stderr, "Memory screwed up, can't make inventory\n");
+        fprintf(stderr, "Oh oh! Memory screwed up, can't make inventory\n");
         exit(EXIT_FAILURE);
     }
 }
@@ -106,7 +106,7 @@ void MakeBiggerInventory(Inventory *inv, int more_space)
     Item *new_items = realloc(inv->items, sizeof(Item) * new_capacity);
     if (!new_items)
     {
-        perror("Can't make inventory bigger, memory fail");
+        perror("Dang it! Can't make inventory bigger, memory fail");
         return;
     }
     inv->items = new_items;
@@ -137,7 +137,15 @@ void GetItem(Inventory *inv, Room *currentRoom, const char *itemName)
     // Special case for Rusty Cog without rucksack
     if (string_compare(itemName, "Rusty Cog") == 0 && inv->capacity == 1)
     {
-        printf("You tried to pick up the rusty cog but dropped it on your foot! Game over you clumsy explorer!\n");
+        printf("\n");
+        printf("  ██████╗  █████╗ ███╗   ███╗███████╗     ██████╗ ██╗   ██╗███████╗██████╗ \n");
+        printf(" ██╔════╝ ██╔══██╗████╗ ████║██╔════╝    ██╔═══██╗██║   ██║██╔════╝██╔══██╗\n");
+        printf(" ██║  ███╗███████║██╔████╔██║█████╗      ██║   ██║██║   ██║█████╗  ██████╔╝\n");
+        printf(" ██║   ██║██╔══██║██║╚██╔╝██║██╔══╝      ██║   ██║╚██╗ ██╔╝██╔══╝  ██╔══██╗\n");
+        printf(" ╚██████╔╝██║  ██║██║ ╚═╝ ██║███████╗    ╚██████╔╝ ╚████╔╝ ███████╗██║  ██║\n");
+        printf("  ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝     ╚═════╝   ╚═══╝  ╚══════╝╚═╝  ╚═╝\n");
+        printf("\n");
+        printf("You tried to pick up the rusty cog but dropped it on your foot! Ouch! You clumsy explorer!\n");
         // Sleep(5000); // waiting for 5 seconds
         exit(0);
     }
@@ -202,6 +210,7 @@ void ThrowItem(Inventory *inv, Room *currentRoom, const char *itemName)
     if (string_compare(itemName, "Rucksack") == 0)
     {
         printf("No way! The rucksack is too useful to just toss away!\n");
+        printf("Seems like someone might be sabotaging himself...\n");
         return;
     }
     // Add item to room
@@ -226,7 +235,7 @@ void ThrowItem(Inventory *inv, Room *currentRoom, const char *itemName)
     }
     else
     {
-        printf("This room is too messy already, can't drop anything else here.\n");
+        printf("Dang it! This room is too messy already, can't drop anything else here.\n");
     }
 }
 
@@ -582,7 +591,7 @@ void DoInteract(Room *currentRoom, Inventory *inv, const char *objectName)
                     return;
                 }
 
-                // If only fruit not dropped
+                // if only fruit not dropped
                 if (!fruitDropped)
                 {
                     printf("You shake the tree and a weird fruit falls down!\n");
@@ -593,10 +602,10 @@ void DoInteract(Room *currentRoom, Inventory *inv, const char *objectName)
                     fruitDropped = true;
                     strcpy(currentRoom->interactables[i]->description,
                            "A weird tree with metal bits in the trunk. The fruit is gone now.");
-                    return;
+                    return; //non trove perchè questo non funzionaba. sembra bene.
                 }
 
-                // If only keycard not taken
+                // If only keycard not taken.
                 if (!keycardTaken)
                 {
                     printf("With the jaguar out of the way, you get a better look at the tree...\n");
@@ -1146,7 +1155,16 @@ void DoCommand(char *command, Inventory *inv, Room **currentRoom, bool *gameRunn
     // Special case for winning
     else if (strcmp(cmd, "win") == 0 && strcmp((*currentRoom)->name, "Gold Room") == 0)
     {
-        printf("Congratulations! You've unlocked the secrets of the temple and won the game!\n");
+        printf("\n");
+        printf(" ██╗   ██╗ ██████╗ ██╗   ██╗    ██     ██ ██╗███╗   ██╗\n");
+        printf(" ╚██╗ ██╔╝██╔═══██╗██║   ██║    ██     ██ ██║████╗  ██║\n");
+        printf("  ╚████╔╝ ██║   ██║██║   ██║    ██  █  ██ ██║██╔██╗ ██║\n");
+        printf("   ╚██╔╝  ██║   ██║██║   ██║    ██ ███ ██ ██║██║╚██╗██║\n");
+        printf("    ██║   ╚██████╔╝╚██████╔╝    ╚███╔███╔╝██║██║ ╚████║\n");
+        printf("    ╚═╝    ╚═════╝  ╚═════╝      ╚══╝╚══╝ ╚═╝╚═╝  ╚═══╝\n");
+        printf("\n");
+        printf("Congratulations!\n");
+        printf("You've unlocked the secrets of the temple and won the game!\n");
         *hasWon = true;
         *gameRunning = false;
         sprintf(result, "Won the game");
@@ -1305,9 +1323,12 @@ int main()
     Room *currentRoom = startingRoom;
 
     // Print welcome message
-    printf("===========================================\n");
-    printf("      TEMPLE OF SECRETS - TEXT ADVENTURE   \n");
-    printf("===========================================\n\n");
+    printf("████████ ███████ ███    ███ ██████  ██      ███████      ███████ ███████  ██████ ██████  ███████ ████████ ███████\n");
+    printf("   ██    ██      ████  ████ ██   ██ ██      ██           ██      ██      ██      ██   ██ ██         ██    ██     \n");
+    printf("   ██    █████   ██ ████ ██ ██████  ██      █████        ███████ █████   ██      ██████  █████      ██    ███████\n");
+    printf("   ██    ██      ██  ██  ██ ██      ██      ██                ██ ██      ██      ██   ██ ██         ██         ██\n");
+    printf("   ██    ███████ ██      ██ ██      ███████ ███████      ███████ ███████  ██████ ██   ██ ███████    ██    ███████\n");
+    printf("Welcome to the Temple of Secrets!\n");
     printf("You are an explorer seeking the treasures of an ancient temple.\n");
     printf("Navigate through the rooms, solve puzzles, and find the golden key to win!\n");
     printf("Type 'help' for a list of commands.\n\n");
@@ -1324,8 +1345,15 @@ int main()
         DoCommand(command, &playerInventory, &currentRoom, &gameRunning, &hasWon, logFile);
         if (strcmp(currentRoom->name, "Gold Room") == 0 && !hasWon)
         {
+            printf("\n");
+            printf(" ██╗   ██╗ ██████╗ ██╗   ██╗    ██     ██ ██╗███╗   ██╗\n");
+            printf(" ╚██╗ ██╔╝██╔═══██╗██║   ██║    ██     ██ ██║████╗  ██║\n");
+            printf("  ╚████╔╝ ██║   ██║██║   ██║    ██  █  ██ ██║██╔██╗ ██║\n");
+            printf("   ╚██╔╝  ██║   ██║██║   ██║    ██ ███ ██ ██║██║╚██╗██║\n");
+            printf("    ██║   ╚██████╔╝╚██████╔╝    ╚███╔███╔╝██║██║ ╚████║\n");
+            printf("    ╚═╝    ╚═════╝  ╚═════╝      ╚══╝╚══╝ ╚═╝╚═╝  ╚═══╝\n");
+            printf("\n");
             printf("Congratulations! You've made it to the Gold Room and found the treasure!\n");
-            printf("YOU WIN!\n");
             hasWon = true;
             gameRunning = false;
         }
