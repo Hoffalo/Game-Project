@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <ctype.h>
 #include <time.h>
+#include <windows.h>
 
 int stricmp(const char *a, const char *b)
 {
@@ -133,6 +134,7 @@ void PickupItem(Inventory *inv, Room *currentRoom, const char *itemName)
     if (stricmp(itemName, "Rusty Cog") == 0 && inv->capacity == 1)
     {
         printf("You tried to pick up the rusty cog but dropped it on your foot! Game over!\n");
+        Sleep(5000); // Wait 5 seconds
         exit(0);
     }
 
