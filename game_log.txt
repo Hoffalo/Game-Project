@@ -1,5 +1,0 @@
-[2025-05-18 14:03:53] south: Moved south to Jungle Room
-[2025-05-18 14:04:04] interact jaguar: Interacted with jaguar
-[2025-05-18 14:04:08] interact chest: Interacted with chest
-[2025-05-18 14:04:10] i: Displayed inventory
-[2025-05-18 14:04:13] quit: Quit game
