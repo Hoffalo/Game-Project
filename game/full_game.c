@@ -4,9 +4,11 @@
 #include <stdbool.h>
 #include <ctype.h>
 #include <time.h>
-#include <windows.h>
+// #include <windows.h>
 
-int stricmp(const char *a, const char *b)
+// string comparison that ignores case
+// cuz the normal one is annoying with uppercase/lowercase
+int string_compare(const char *a, const char *b)
 {
     for (;; a++, b++)
     {
@@ -18,18 +20,18 @@ int stricmp(const char *a, const char *b)
 
 typedef struct Room Room;
 
-// Item structure to hold item name and quantity
+// stuff we need for items
 typedef struct
 {
     char name[50];
     int quantity;
     char description[200];
-    bool isCombinable;
+    bool canCombine;
     char combineWith[50];
     char resultItem[50];
 } Item;
 
-// Inventory structure to hold items and total capacity
+// backpack stuff
 typedef struct
 {
     Item *items;
@@ -37,6 +39,7 @@ typedef struct
     int count;
 } Inventory;
 
+// interactive objects
 typedef struct
 {
     char name[50];
@@ -46,6 +49,7 @@ typedef struct
     char answer[50];
 } Interactable;
 
+// room structure(connections to other rooms and what's in it)
 typedef struct Room
 {
     char name[50];
@@ -64,60 +68,60 @@ typedef struct Room
     Room *west;
 } Room;
 
-// Function declarations
-void InitInventory(Inventory *inv);
-void ExpandInventory(Inventory *inv, int additional_space);
-void PickupItem(Inventory *inv, Room *currentRoom, const char *itemName);
-void DropItem(Inventory *inv, Room *currentRoom, const char *itemName);
-void ExamineItem(const Inventory *inv, const char *itemName);
-void PrintInventory(const Inventory *inv);
-Item *CreateItem(const char *name, int quantity, const char *description, bool isCombinable, const char *combineWith, const char *resultItem);
-Interactable *CreateInteractable(const char *name, const char *description, const char *riddle, const char *answer);
-void ProcessCommand(char *command, Inventory *inv, Room **currentRoom, bool *gameRunning, bool *hasWon, FILE *logFile);
-void LogAction(FILE *logFile, const char *action, const char *result);
-bool CombineItems(Inventory *inv, const char *item1, const char *item2);
-void InteractWith(Room *currentRoom, Inventory *inv, const char *objectName);
-void UseItem(Room *currentRoom, Inventory *inv, const char *itemName, const char *targetName);
-bool HasItem(const Inventory *inv, const char *itemName);
-void RemoveItemFromInventory(Inventory *inv, const char *itemName);
-void AddItemToRoom(Room *room, Item *item);
+// all the functions we'll need
+void StartInventory(Inventory *inv);
+void MakeBiggerInventory(Inventory *inv, int more_space);
+void GetItem(Inventory *inv, Room *currentRoom, const char *itemName);
+void ThrowItem(Inventory *inv, Room *currentRoom, const char *itemName);
+void LookAtItem(const Inventory *inv, const char *itemName);
+void ShowInventory(const Inventory *inv);
+Item *MakeItem(const char *name, int quantity, const char *description, bool canCombine, const char *combineWith, const char *resultItem);
+Interactable *MakeInteractable(const char *name, const char *description, const char *riddle, const char *answer);
+void DoCommand(char *command, Inventory *inv, Room **currentRoom, bool *gameRunning, bool *hasWon, FILE *logFile);
+void WriteToLog(FILE *logFile, const char *action, const char *result);
+bool MergeItems(Inventory *inv, const char *item1, const char *item2);
+void DoInteract(Room *currentRoom, Inventory *inv, const char *objectName);
+void DoUseItem(Room *currentRoom, Inventory *inv, const char *itemName, const char *targetName);
+bool GotItem(const Inventory *inv, const char *itemName);
+void DeleteItemFromBag(Inventory *inv, const char *itemName);
+void PutItemInRoom(Room *room, Item *item);
 
-// Initializes the inventory with a default capacity of 1
-void InitInventory(Inventory *inv)
+// set up the inventory with 1 space at first
+void StartInventory(Inventory *inv)
 {
     inv->capacity = 1;
     inv->count = 0;
     inv->items = (Item *)malloc(sizeof(Item) * inv->capacity);
     if (inv->items == NULL)
     {
-        fprintf(stderr, "Memory allocation failed\n");
+        fprintf(stderr, "Memory screwed up, can't make inventory\n");
         exit(EXIT_FAILURE);
     }
 }
 
-// Expands the inventory to have additional slots
-void ExpandInventory(Inventory *inv, int additional_space)
+// make the inventory bigger
+void MakeBiggerInventory(Inventory *inv, int more_space)
 {
-    int new_capacity = inv->capacity + additional_space;
+    int new_capacity = inv->capacity + more_space;
     Item *new_items = realloc(inv->items, sizeof(Item) * new_capacity);
     if (!new_items)
     {
-        perror("Failed to expand inventory");
+        perror("Can't make inventory bigger, memory fail");
         return;
     }
     inv->items = new_items;
     inv->capacity = new_capacity;
-    printf("Your inventory capacity is now %d slots.\n", inv->capacity);
+    printf("Sweet! Your inventory now has %d slots.\n", inv->capacity);
 }
 
-// Picks up an item from the current room and adds it to inventory
-void PickupItem(Inventory *inv, Room *currentRoom, const char *itemName)
+// pick up stuff from the room
+void GetItem(Inventory *inv, Room *currentRoom, const char *itemName)
 {
-    // Find item in the room
+    // find the item in the room
     int itemIndex = -1;
     for (int i = 0; i < currentRoom->itemCount; i++)
     {
-        if (stricmp(currentRoom->items[i]->name, itemName) == 0)
+        if (string_compare(currentRoom->items[i]->name, itemName) == 0)
         {
             itemIndex = i;
             break;
@@ -126,26 +130,26 @@ void PickupItem(Inventory *inv, Room *currentRoom, const char *itemName)
 
     if (itemIndex == -1)
     {
-        printf("There is no %s here to pick up.\n", itemName);
+        printf("There's no %s here that you can grab.\n", itemName);
         return;
     }
 
     // Special case for Rusty Cog without rucksack
-    if (stricmp(itemName, "Rusty Cog") == 0 && inv->capacity == 1)
+    if (string_compare(itemName, "Rusty Cog") == 0 && inv->capacity == 1)
     {
-        printf("You tried to pick up the rusty cog but dropped it on your foot! Game over!\n");
-        Sleep(5000); // Wait 5 seconds
+        printf("You tried to pick up the rusty cog but dropped it on your foot! Game over you clumsy explorer!\n");
+        // Sleep(5000); // waiting for 5 seconds
         exit(0);
     }
 
-    // Special case for Rucksack: expand inventory first, and allow pickup even if full
-    if (stricmp(itemName, "Rucksack") == 0)
+    // Special case for Rucksack: expand inventory firs and allow pickup even if full
+    if (string_compare(itemName, "Rucksack") == 0)
     {
-        ExpandInventory(inv, 9);
+        MakeBiggerInventory(inv, 9);
     }
     else if (inv->count >= inv->capacity)
     {
-        printf("Inventory is full! Cannot pick up %s.\n", itemName);
+        printf("Your pockets are full! Can't take %s.\n", itemName);
         return;
     }
 
@@ -153,22 +157,22 @@ void PickupItem(Inventory *inv, Room *currentRoom, const char *itemName)
     strcpy(inv->items[inv->count].name, currentRoom->items[itemIndex]->name);
     strcpy(inv->items[inv->count].description, currentRoom->items[itemIndex]->description);
     inv->items[inv->count].quantity = currentRoom->items[itemIndex]->quantity;
-    inv->items[inv->count].isCombinable = currentRoom->items[itemIndex]->isCombinable;
+    inv->items[inv->count].canCombine = currentRoom->items[itemIndex]->canCombine;
     strcpy(inv->items[inv->count].combineWith, currentRoom->items[itemIndex]->combineWith);
     strcpy(inv->items[inv->count].resultItem, currentRoom->items[itemIndex]->resultItem);
     inv->count++;
 
-    if (stricmp(itemName, "Rucksack") == 0)
+    if (string_compare(itemName, "Rucksack") == 0)
     {
-        printf("You picked up a rucksack! Now you can carry more items.\n");
-        printf("Your inventory capacity is now %d slots.\n", inv->capacity);
+        printf("Awesome! You got a rucksack! Now you can carry more junk.\n");
+        printf("You've got %d slots in your bag now.\n", inv->capacity);
     }
     else
     {
-        printf("Picked up %s.\n", itemName);
+        printf("Got the %s!\n", itemName);
     }
 
-    // Remove item from room
+    // remove item from room
     free(currentRoom->items[itemIndex]);
     for (int i = itemIndex; i < currentRoom->itemCount - 1; i++)
     {
@@ -177,13 +181,13 @@ void PickupItem(Inventory *inv, Room *currentRoom, const char *itemName)
     currentRoom->itemCount--;
 }
 
-// Drops an item from inventory to the current room
-void DropItem(Inventory *inv, Room *currentRoom, const char *itemName)
+// drop something from inventory
+void ThrowItem(Inventory *inv, Room *currentRoom, const char *itemName)
 {
     int itemIndex = -1;
     for (int i = 0; i < inv->count; i++)
     {
-        if (stricmp(inv->items[i].name, itemName) == 0)
+        if (string_compare(inv->items[i].name, itemName) == 0)
         {
             itemIndex = i;
             break;
@@ -191,23 +195,23 @@ void DropItem(Inventory *inv, Room *currentRoom, const char *itemName)
     }
     if (itemIndex == -1)
     {
-        printf("You don't have %s in your inventory.\n", itemName);
+        printf("You don't have a %s to drop.\n", itemName);
         return;
     }
     // Don't allow dropping the rucksack
-    if (stricmp(itemName, "Rucksack") == 0)
+    if (string_compare(itemName, "Rucksack") == 0)
     {
-        printf("You can't drop the rucksack, it's too useful!\n");
+        printf("No way! The rucksack is too useful to just toss away!\n");
         return;
     }
     // Add item to room
     if (currentRoom->itemCount < 10)
     {
-        Item *droppedItem = CreateItem(
+        Item *droppedItem = MakeItem(
             inv->items[itemIndex].name,
             inv->items[itemIndex].quantity,
             inv->items[itemIndex].description,
-            inv->items[itemIndex].isCombinable,
+            inv->items[itemIndex].canCombine,
             inv->items[itemIndex].combineWith,
             inv->items[itemIndex].resultItem);
         currentRoom->items[currentRoom->itemCount] = droppedItem;
@@ -218,68 +222,68 @@ void DropItem(Inventory *inv, Room *currentRoom, const char *itemName)
             inv->items[i] = inv->items[i + 1];
         }
         inv->count--;
-        printf("Dropped %s.\n", itemName);
+        printf("Dropped the %s on the floor.\n", itemName);
     }
     else
     {
-        printf("The room is too cluttered to drop anything else.\n");
+        printf("This room is too messy already, can't drop anything else here.\n");
     }
 }
 
-// Examines an item in the inventory
-void ExamineItem(const Inventory *inv, const char *itemName)
+// look at an item closer
+void LookAtItem(const Inventory *inv, const char *itemName)
 {
     for (int i = 0; i < inv->count; i++)
     {
-        if (stricmp(inv->items[i].name, itemName) == 0)
+        if (string_compare(inv->items[i].name, itemName) == 0)
         {
             printf("%s: %s\n", inv->items[i].name, inv->items[i].description);
             return;
         }
     }
-    printf("You don't have %s in your inventory.\n", itemName);
+    printf("You don't have a %s to look at.\n", itemName);
 }
 
-// Prints inventory contents
-void PrintInventory(const Inventory *inv)
+// show what's in your inventory
+void ShowInventory(const Inventory *inv)
 {
     if (inv->count == 0)
     {
-        printf("Your inventory is empty.\n");
+        printf("You're not carrying anything.\n");
         return;
     }
-    printf("Inventory (%d/%d slots):\n", inv->count, inv->capacity);
+    printf("Your stuff (%d/%d slots):\n", inv->count, inv->capacity);
     for (int i = 0; i < inv->count; i++)
     {
         printf("- %s (%d)\n", inv->items[i].name, inv->items[i].quantity);
     }
 }
 
-// Creates a new item
-Item *CreateItem(const char *name, int quantity, const char *description, bool isCombinable, const char *combineWith, const char *resultItem)
+// create a new item
+Item *MakeItem(const char *name, int quantity, const char *description, bool canCombine, const char *combineWith, const char *resultItem)
 {
     Item *newItem = (Item *)malloc(sizeof(Item));
     if (!newItem)
     {
-        perror("Failed to allocate memory for item");
+        perror("Memory fail - couldn't make new item");
         return NULL;
     }
     strcpy(newItem->name, name);
     newItem->quantity = quantity;
     strcpy(newItem->description, description);
-    newItem->isCombinable = isCombinable;
+    newItem->canCombine = canCombine;
     strcpy(newItem->combineWith, combineWith);
     strcpy(newItem->resultItem, resultItem);
     return newItem;
 }
 
-// Creates a new interactable object
-Interactable *CreateInteractable(const char *name, const char *description, const char *riddle, const char *answer)
+// make something you can interact with
+Interactable *MakeInteractable(const char *name, const char *description, const char *riddle, const char *answer)
 {
     Interactable *newInteractable = (Interactable *)malloc(sizeof(Interactable));
     if (!newInteractable)
     {
-        perror("Failed to allocate memory for interactable");
+        perror("Memory screwed up - can't make interactable");
         return NULL;
     }
     strcpy(newInteractable->name, name);
@@ -290,12 +294,12 @@ Interactable *CreateInteractable(const char *name, const char *description, cons
     return newInteractable;
 }
 
-// Checks if the inventory contains a specific item
-bool HasItem(const Inventory *inv, const char *itemName)
+// check if you have an item
+bool GotItem(const Inventory *inv, const char *itemName)
 {
     for (int i = 0; i < inv->count; i++)
     {
-        if (stricmp(inv->items[i].name, itemName) == 0)
+        if (string_compare(inv->items[i].name, itemName) == 0)
         {
             return true;
         }
@@ -303,13 +307,13 @@ bool HasItem(const Inventory *inv, const char *itemName)
     return false;
 }
 
-// Removes an item from inventory
-void RemoveItemFromInventory(Inventory *inv, const char *itemName)
+// remove an item from inventory
+void DeleteItemFromBag(Inventory *inv, const char *itemName)
 {
     int itemIndex = -1;
     for (int i = 0; i < inv->count; i++)
     {
-        if (stricmp(inv->items[i].name, itemName) == 0)
+        if (string_compare(inv->items[i].name, itemName) == 0)
         {
             itemIndex = i;
             break;
@@ -326,8 +330,8 @@ void RemoveItemFromInventory(Inventory *inv, const char *itemName)
     inv->count--;
 }
 
-// Adds an item to a room
-void AddItemToRoom(Room *room, Item *item)
+// add an item to a room
+void PutItemInRoom(Room *room, Item *item)
 {
     if (room->itemCount < 10)
     {
@@ -336,83 +340,83 @@ void AddItemToRoom(Room *room, Item *item)
     }
 }
 
-// Combines two items in the inventory
-bool CombineItems(Inventory *inv, const char *item1, const char *item2)
+// combine two items in inventory
+bool MergeItems(Inventory *inv, const char *item1, const char *item2)
 {
     int index1 = -1, index2 = -1;
     for (int i = 0; i < inv->count; i++)
     {
-        if (stricmp(inv->items[i].name, item1) == 0)
+        if (string_compare(inv->items[i].name, item1) == 0)
         {
             index1 = i;
         }
-        if (stricmp(inv->items[i].name, item2) == 0)
+        if (string_compare(inv->items[i].name, item2) == 0)
         {
             index2 = i;
         }
     }
     if (index1 == -1 || index2 == -1)
     {
-        printf("You don't have both items to combine.\n");
+        printf("You don't have both those things to combine.\n");
         return false;
     }
-    // Check if items can be combined
-    if (inv->items[index1].isCombinable &&
-        (stricmp(inv->items[index1].combineWith, inv->items[index2].name) == 0))
+    // check if items can be combined
+    if (inv->items[index1].canCombine &&
+        (string_compare(inv->items[index1].combineWith, inv->items[index2].name) == 0))
     {
         strcpy(inv->items[inv->count].name, inv->items[index1].resultItem);
         if (strcmp(inv->items[index1].resultItem, "Clean Cog") == 0)
-            strcpy(inv->items[inv->count].description, "A clean, rust-free cog that can be used in machinery.");
+            strcpy(inv->items[inv->count].description, "A shiny, rust-free cog that looks like it'll work in machinery now.");
         else if (strcmp(inv->items[index1].resultItem, "Combined Key Parts") == 0)
-            strcpy(inv->items[inv->count].description, "Two key parts combined. Maybe there's a third?");
+            strcpy(inv->items[inv->count].description, "Two key parts stuck together. Hmm, looks like there might be a third piece?");
         else if (strcmp(inv->items[index1].resultItem, "Golden Key") == 0)
-            strcpy(inv->items[inv->count].description, "A magnificent golden key that looks important.");
+            strcpy(inv->items[inv->count].description, "A super fancy golden key. Bet this opens something important!");
         else
             strcpy(inv->items[inv->count].description, "Combined item");
         inv->items[inv->count].quantity = 1;
-        inv->items[inv->count].isCombinable = false;
+        inv->items[inv->count].canCombine = false;
         inv->count++;
-        RemoveItemFromInventory(inv, item1);
-        RemoveItemFromInventory(inv, item2);
-        printf("Combined %s and %s to create %s!\n", item1, item2, inv->items[inv->count - 1].name);
+        DeleteItemFromBag(inv, item1);
+        DeleteItemFromBag(inv, item2);
+        printf("Sweet! Combined %s and %s to make a %s!\n", item1, item2, inv->items[inv->count - 1].name);
         return true;
     }
-    else if (inv->items[index2].isCombinable &&
-             (stricmp(inv->items[index2].combineWith, inv->items[index1].name) == 0))
+    else if (inv->items[index2].canCombine &&
+             (string_compare(inv->items[index2].combineWith, inv->items[index1].name) == 0))
     {
         strcpy(inv->items[inv->count].name, inv->items[index2].resultItem);
         strcpy(inv->items[inv->count].description, "Combined item");
         inv->items[inv->count].quantity = 1;
-        inv->items[inv->count].isCombinable = false;
+        inv->items[inv->count].canCombine = false;
         inv->count++;
-        RemoveItemFromInventory(inv, item1);
-        RemoveItemFromInventory(inv, item2);
-        printf("Combined %s and %s to create %s!\n", item1, item2, inv->items[inv->count - 1].name);
+        DeleteItemFromBag(inv, item1);
+        DeleteItemFromBag(inv, item2);
+        printf("Nice! Combined %s and %s to make a %s!\n", item1, item2, inv->items[inv->count - 1].name);
         return true;
     }
     else
     {
-        printf("These items cannot be combined.\n");
+        printf("Nope, those things don't work together.\n");
         return false;
     }
 }
 
-void InteractWith(Room *currentRoom, Inventory *inv, const char *objectName)
+void DoInteract(Room *currentRoom, Inventory *inv, const char *objectName)
 {
     for (int i = 0; i < currentRoom->interactableCount; i++)
     {
-        if (stricmp(currentRoom->interactables[i]->name, objectName) == 0)
+        if (string_compare(currentRoom->interactables[i]->name, objectName) == 0)
         {
-            printf("You interact with %s.\n", objectName);
+            printf("You check out the %s.\n", objectName);
 
             // Jaguar logic
-            if (stricmp(objectName, "Jaguar") == 0 && !currentRoom->interactables[i]->interacted)
+            if (string_compare(objectName, "Jaguar") == 0 && !currentRoom->interactables[i]->interacted)
             {
-                printf("The jaguar looks at you with ancient wisdom in its eyes and speaks:\n");
+                printf("The jaguar stares at you with ancient eyes and speaks:\n");
                 printf("\"%s\"\n", currentRoom->interactables[i]->riddle);
 
                 char answer[50];
-                printf("What is your answer? ");
+                printf("What's your answer? ");
                 scanf("%49s", answer);
                 int c;
                 while ((c = getchar()) != '\n' && c != EOF)
@@ -432,14 +436,14 @@ void InteractWith(Room *currentRoom, Inventory *inv, const char *objectName)
 
                 if (strcmp(answer, correctAnswer) == 0)
                 {
-                    printf("The jaguar nods approvingly. \"You have proven your wisdom.\"\n");
-                    printf("The jaguar moves aside, revealing a gleaming key part in the chest.\n");
+                    printf("The jaguar nods. \"You have wisdom, traveler.\"\n");
+                    printf("The jaguar moves aside, and you see a gleaming key part in the chest!\n");
                     for (int j = 0; j < currentRoom->interactableCount; j++)
                     {
                         if (strcmp(currentRoom->interactables[j]->name, "Chest") == 0)
                         {
                             strcpy(currentRoom->interactables[j]->description,
-                                   "A chest containing the first part of a golden key.");
+                                   "A chest with the first part of a golden key inside.");
                             break;
                         }
                     }
@@ -447,12 +451,12 @@ void InteractWith(Room *currentRoom, Inventory *inv, const char *objectName)
                 }
                 else
                 {
-                    printf("The jaguar growls. \"That is incorrect. Prove your wisdom or leave.\"\n");
+                    printf("The jaguar growls. \"Wrong! Try again or leave.\"\n");
                 }
                 return;
             }
-            // --- CHEST LOGIC ---
-            else if (stricmp(objectName, "Chest") == 0)
+            // CHEST LOGIC
+            else if (string_compare(objectName, "Chest") == 0) // პრობლემა იყო შედარებისას რადგან პატარა ასოს არ იღებდა. გამოვასწორე!
             {
                 // Check if jaguar has been satisfied
                 bool jaguarSatisfied = false;
@@ -472,51 +476,50 @@ void InteractWith(Room *currentRoom, Inventory *inv, const char *objectName)
                 {
                     if (!keyPartTaken)
                     {
-                        printf("You open the chest and find the first part of a golden key!\n");
-                        
+                        printf("You open the chest and find a piece of golden key!\n");
+
                         // Check if there's space in inventory
                         if (inv->count < inv->capacity)
                         {
                             // Add key part directly to inventory
                             strcpy(inv->items[inv->count].name, "Key Part 1");
-                            strcpy(inv->items[inv->count].description, "The first part of a three-part golden key.");
+                            strcpy(inv->items[inv->count].description, "First piece of a three-part golden key.");
                             inv->items[inv->count].quantity = 1;
-                            inv->items[inv->count].isCombinable = true;
+                            inv->items[inv->count].canCombine = true;
                             strcpy(inv->items[inv->count].combineWith, "Key Part 2");
                             strcpy(inv->items[inv->count].resultItem, "Combined Key Parts");
                             inv->count++;
-                            
-                            printf("You automatically take the key part and put it in your inventory.\n");
-                            
-                            // Update chest description
+
+                            printf("You grab the key part!\n");
+
                             strcpy(currentRoom->interactables[i]->description,
-                                "An open chest. You've already taken the key part.");
-                            
+                                   "An empty chest. Nothing left in here.");
+
                             keyPartTaken = true;
                         }
                         else
                         {
-                            printf("Your inventory is full! You can't take the key part.\n");
+                            printf("Your inventory is full! Can't take the key part.\n");
                             // Create the key part and add it to the room instead
-                            Item *keyPart = CreateItem("Key Part 1", 1,
-                                                "The first part of a three-part golden key.",
-                                                true, "Key Part 2", "Combined Key Parts");
-                            AddItemToRoom(currentRoom, keyPart);
+                            Item *keyPart = MakeItem("Key Part 1", 1,
+                                                     "First piece of a three-part golden key.",
+                                                     true, "Key Part 2", "Combined Key Parts");
+                            PutItemInRoom(currentRoom, keyPart);
                         }
                     }
                     else
                     {
-                        printf("The chest is empty. You've already taken the key part.\n");
+                        printf("Chest is empty. You already took the key part.\n");
                     }
                 }
                 else
                 {
-                    printf("The chest is guarded by the jaguar. You need to satisfy it first.\n");
+                    printf("The jaguar is guarding this chest. Deal with it first.\n");
                 }
                 return;
             }
-            // --- TREE LOGIC ---
-            else if (stricmp(objectName, "Tree") == 0)
+            // TREE LOGIC
+            else if (string_compare(objectName, "Tree") == 0)
             {
                 // Check if jaguar has been satisfied first
                 bool jaguarSatisfied = false;
@@ -535,96 +538,96 @@ void InteractWith(Room *currentRoom, Inventory *inv, const char *objectName)
 
                 if (!jaguarSatisfied)
                 {
-                    printf("The jaguar is blocking your way to examine the tree fully. You need to solve its riddle first.\n");
+                    printf("That darn jaguar is blocking you from checking out the tree properly.\n");
                     return;
                 }
 
                 // If neither has happened, do both at once
                 if (!keycardTaken && !fruitDropped)
                 {
-                    printf("You shake the tree. A suspicious fruit drops to the ground, and you spot a shiny keycard embedded in the trunk!\n");
+                    printf("You shake the tree hard! A weird fruit falls down, and there's a keycard stuck in the trunk!\n");
 
                     // Drop fruit to the ground
-                    Item *fruit = CreateItem("Suspicious fruit", 1,
-                                             "A strange glowing fruit that doesn't look edible but might have other uses.",
-                                             false, "", "");
-                    AddItemToRoom(currentRoom, fruit);
+                    Item *fruit = MakeItem("Suspicious fruit", 1,
+                                           "A strange glowing fruit. Definitely not for eating, but maybe useful?",
+                                           false, "", "");
+                    PutItemInRoom(currentRoom, fruit);
                     fruitDropped = true;
 
                     // Add keycard to inventory if possible, else drop to ground
                     if (inv->count < inv->capacity)
                     {
                         strcpy(inv->items[inv->count].name, "Keycard");
-                        strcpy(inv->items[inv->count].description, "A high-tech keycard that can unlock electronic doors.");
+                        strcpy(inv->items[inv->count].description, "High-tech keycard. Probably opens an electronic door somewhere.");
                         inv->items[inv->count].quantity = 1;
-                        inv->items[inv->count].isCombinable = false;
+                        inv->items[inv->count].canCombine = false;
                         strcpy(inv->items[inv->count].combineWith, "");
                         strcpy(inv->items[inv->count].resultItem, "");
                         inv->count++;
-                        printf("You automatically take the keycard and put it in your inventory.\n");
+                        printf("You grab the keycard!\n");
                     }
                     else
                     {
-                        printf("Your inventory is full! You can't take the keycard.\n");
-                        Item *keycard = CreateItem("Keycard", 1,
-                                                   "A high-tech keycard that can unlock electronic doors.",
-                                                   false, "", "");
-                        AddItemToRoom(currentRoom, keycard);
+                        printf("No room in your inventory for the keycard!\n");
+                        Item *keycard = MakeItem("Keycard", 1,
+                                                 "High-tech keycard. Probably opens an electronic door somewhere.",
+                                                 false, "", "");
+                        PutItemInRoom(currentRoom, keycard);
                     }
                     keycardTaken = true;
 
-                    // Update tree description
+                    // update tree description
                     strcpy(currentRoom->interactables[i]->description,
-                           "An unusual tree with metal components embedded in its trunk. The fruit has already fallen and the keycard is gone.");
+                           "A weird tree with metal bits in the trunk. Fruit's gone and so is the keycard.");
                     return;
                 }
 
                 // If only fruit not dropped
                 if (!fruitDropped)
                 {
-                    printf("You shake the tree and a suspicious fruit drops to the ground!\n");
-                    Item *fruit = CreateItem("Suspicious fruit", 1,
-                                             "A strange glowing fruit that doesn't look edible but might have other uses.",
-                                             false, "", "");
-                    AddItemToRoom(currentRoom, fruit);
+                    printf("You shake the tree and a weird fruit falls down!\n");
+                    Item *fruit = MakeItem("Suspicious fruit", 1,
+                                           "A strange glowing fruit. Definitely not for eating, but maybe useful?",
+                                           false, "", "");
+                    PutItemInRoom(currentRoom, fruit);
                     fruitDropped = true;
                     strcpy(currentRoom->interactables[i]->description,
-                           "An unusual tree with metal components embedded in its trunk. The fruit has already fallen.");
+                           "A weird tree with metal bits in the trunk. The fruit is gone now.");
                     return;
                 }
 
                 // If only keycard not taken
                 if (!keycardTaken)
                 {
-                    printf("With the jaguar out of the way, you can now examine the tree more closely...\n");
-                    printf("There's something shiny embedded in the trunk. It looks like a keycard!\n");
+                    printf("With the jaguar out of the way, you get a better look at the tree...\n");
+                    printf("There's something shiny in the trunk - a keycard!\n");
                     if (inv->count < inv->capacity)
                     {
                         strcpy(inv->items[inv->count].name, "Keycard");
-                        strcpy(inv->items[inv->count].description, "A high-tech keycard that can unlock electronic doors.");
+                        strcpy(inv->items[inv->count].description, "High-tech keycard. Probably opens an electronic door somewhere.");
                         inv->items[inv->count].quantity = 1;
-                        inv->items[inv->count].isCombinable = false;
+                        inv->items[inv->count].canCombine = false;
                         strcpy(inv->items[inv->count].combineWith, "");
                         strcpy(inv->items[inv->count].resultItem, "");
                         inv->count++;
-                        printf("You automatically take the keycard and put it in your inventory.\n");
+                        printf("You grab the keycard!\n");
                     }
                     else
                     {
-                        printf("Your inventory is full! You can't take the keycard.\n");
-                        Item *keycard = CreateItem("Keycard", 1,
-                                                   "A high-tech keycard that can unlock electronic doors.",
-                                                   false, "", "");
-                        AddItemToRoom(currentRoom, keycard);
+                        printf("Your inventory is full! Can't take the keycard!\n");
+                        Item *keycard = MakeItem("Keycard", 1,
+                                                 "High-tech keycard. Probably opens an electronic door somewhere.",
+                                                 false, "", "");
+                        PutItemInRoom(currentRoom, keycard);
                     }
                     keycardTaken = true;
                     strcpy(currentRoom->interactables[i]->description,
-                           "An unusual tree with metal components embedded in its trunk. The keycard is gone.");
+                           "A weird tree with metal bits in the trunk. The keycard is gone now.");
                     return;
                 }
 
                 // If both already done
-                printf("There's nothing else of interest in the tree.\n");
+                printf("Nothing else interesting about this tree.\n");
                 return;
             }
             // Default: print description
@@ -632,114 +635,124 @@ void InteractWith(Room *currentRoom, Inventory *inv, const char *objectName)
             return;
         }
     }
-    printf("There is no %s here to interact with.\n", objectName);
+    printf("There's no %s here to mess with.\n", objectName);
 }
 
 // Use an item on a target
-void UseItem(Room *currentRoom, Inventory *inv, const char *itemName, const char *targetName)
+void DoUseItem(Room *currentRoom, Inventory *inv, const char *itemName, const char *targetName)
 {
-    if (!HasItem(inv, itemName))
+    if (!GotItem(inv, itemName))
     {
-        printf("You don't have %s in your inventory.\n", itemName);
+        printf("You don't have a %s to use.\n", itemName);
         return;
     }
     // Special case for Golden Key on the golden door
-    if (stricmp(itemName, "Golden Key") == 0 && stricmp(targetName, "golden door") == 0)
+    if (string_compare(itemName, "Golden Key") == 0 && string_compare(targetName, "golden door") == 0)
     {
-        if (currentRoom->north && stricmp(currentRoom->north->name, "Gold Room") == 0)
+        if (currentRoom->north && string_compare(currentRoom->north->name, "Gold Room") == 0)
         {
-            printf("You use the Golden Key on the golden door. It unlocks!\n");
+            printf("You put the Golden Key in the door and it clicks open!\n");
             currentRoom->north->isLocked = false;
-            RemoveItemFromInventory(inv, "Golden Key");
+            DeleteItemFromBag(inv, "Golden Key");
             return;
         }
     }
     // Special case for Keycard on cyber room door
-    if (stricmp(itemName, "Keycard") == 0 && stricmp(targetName, "metal door") == 0)
+    if (string_compare(itemName, "Keycard") == 0 && string_compare(targetName, "metal door") == 0)
     {
-        if (currentRoom->west && stricmp(currentRoom->west->name, "Cyber Room") == 0)
+        if (currentRoom->west && string_compare(currentRoom->west->name, "Cyber Room") == 0)
         {
-            printf("You swipe the keycard on the door's reader. The door slides open!\n");
+            printf("You swipe the keycard and the door slides open with a whoosh!\n");
             currentRoom->west->isLocked = false;
-            RemoveItemFromInventory(inv, "Keycard");
+            DeleteItemFromBag(inv, "Keycard");
             return;
         }
     }
     // Blend suspicious fruit in kitchen to get anti-rust solution
-    if (stricmp(itemName, "Suspicious fruit") == 0 && stricmp(targetName, "kitchen") == 0)
+    if (string_compare(itemName, "Suspicious fruit") == 0 && string_compare(targetName, "kitchen") == 0)
     {
-        if (currentRoom->interactableCount > 0) {
+        if (currentRoom->interactableCount > 0)
+        {
             bool foundKitchen = false;
-            for (int i = 0; i < currentRoom->interactableCount; i++) {
-                if (stricmp(currentRoom->interactables[i]->name, "Kitchen") == 0) {
+            for (int i = 0; i < currentRoom->interactableCount; i++)
+            {
+                if (string_compare(currentRoom->interactables[i]->name, "Kitchen") == 0)
+                {
                     foundKitchen = true;
                     break;
                 }
             }
-            if (foundKitchen) {
-                printf("You blend the suspicious fruit in the kitchen. It produces a potent anti-rust solution!\n");
-                RemoveItemFromInventory(inv, "Suspicious fruit");
-                Item *antiRust = CreateItem("Anti-Rust Solution", 1,
-                    "A chemical solution that can remove rust from metal objects.",
-                    true, "Rusty Cog", "Clean Cog");
-                AddItemToRoom(currentRoom, antiRust);
+            if (foundKitchen)
+            {
+                printf("You toss the fruit in the blender and it turns into some kind of anti-Rust Solution!\n");
+                DeleteItemFromBag(inv, "Suspicious fruit");
+                Item *antiRust = MakeItem("Anti-Rust Solution", 1,
+                                          "Weird chemical goop that can clean rust off metal stuff.",
+                                          true, "Rusty Cog", "Clean Cog");
+                PutItemInRoom(currentRoom, antiRust);
                 return;
             }
         }
-        printf("There is no kitchen here to use the fruit with.\n");
+        printf("There's no kitchen here to use the fruit in.\n");
         return;
     }
     // Use cog or clean cog to break glass pane and get crowbar
     if (
-        (stricmp(itemName, "Rusty Cog") == 0 || stricmp(itemName, "Clean Cog") == 0) &&
-        stricmp(targetName, "glass pane") == 0
-    )
+        (string_compare(itemName, "Rusty Cog") == 0 || string_compare(itemName, "Clean Cog") == 0) &&
+        string_compare(targetName, "glass pane") == 0)
     {
-        if (currentRoom->interactableCount > 0) {
+        if (currentRoom->interactableCount > 0)
+        {
             bool foundGlass = false;
             static bool crowbarTaken = false;
-            for (int i = 0; i < currentRoom->interactableCount; i++) {
-                if (stricmp(currentRoom->interactables[i]->name, "Glass Pane") == 0) {
+            for (int i = 0; i < currentRoom->interactableCount; i++)
+            {
+                if (string_compare(currentRoom->interactables[i]->name, "Glass Pane") == 0)
+                {
                     foundGlass = true;
-                    if (!crowbarTaken) {
-                        printf("You smash the glass pane with the cog. Inside, you find a crowbar!\n");
-                        Item *crowbar = CreateItem("Crowbar", 1,
-                            "A sturdy crowbar, perfect for prying things open.",
-                            false, "", "");
-                        AddItemToRoom(currentRoom, crowbar);
+                    if (!crowbarTaken)
+                    {
+                        printf("You smash the glass with the cog. CRASH! There's a crowbar inside!\n");
+                        Item *crowbar = MakeItem("Crowbar", 1,
+                                                 "Heavy crowbar for prying stuff open. Also good for smashing things!",
+                                                 false, "", "");
+                        PutItemInRoom(currentRoom, crowbar);
                         crowbarTaken = true;
                         strcpy(currentRoom->interactables[i]->description,
-                            "A shattered glass pane. The crowbar is gone.");
-                    } else {
-                        printf("The glass pane is already broken and the crowbar is gone.\n");
+                               "Broken glass everywhere. The crowbar is gone.");
+                    }
+                    else
+                    {
+                        printf("The glass is already smashed and the crowbar is gone.\n");
                     }
                     break;
                 }
             }
-            if (!foundGlass) {
-                printf("There is no glass pane here to break.\n");
+            if (!foundGlass)
+            {
+                printf("There's no glass pane here to break.\n");
             }
             return;
         }
     }
     // Use crowbar on crate in Entrance Hall
-    if (stricmp(itemName, "Crowbar") == 0 && stricmp(targetName, "crate") == 0)
+    if (string_compare(itemName, "Crowbar") == 0 && string_compare(targetName, "crate") == 0)
     {
-        if (stricmp(currentRoom->name, "Entrance Hall") == 0)
+        if (string_compare(currentRoom->name, "Entrance Hall") == 0)
         {
             static bool crateOpened = false;
             if (!crateOpened)
             {
                 printf("You pry open the crate with the crowbar! Inside, you find the second part of the golden key.\n");
-                Item *keyPart2 = CreateItem("Key Part 2", 1,
-                    "The second part of a three-part golden key.",
-                    true, "Key Part 1", "Combined Key Parts");
-                AddItemToRoom(currentRoom, keyPart2);
+                Item *keyPart2 = MakeItem("Key Part 2", 1,
+                                          "The second part of a three-part golden key.",
+                                          true, "Key Part 1", "Combined Key Parts");
+                PutItemInRoom(currentRoom, keyPart2);
                 crateOpened = true;
-                // Optionally update crate description
+                // Update crate description
                 for (int i = 0; i < currentRoom->interactableCount; i++)
                 {
-                    if (stricmp(currentRoom->interactables[i]->name, "Crate") == 0)
+                    if (string_compare(currentRoom->interactables[i]->name, "Crate") == 0)
                     {
                         strcpy(currentRoom->interactables[i]->description, "An empty crate, now pried open.");
                         break;
@@ -754,18 +767,18 @@ void UseItem(Room *currentRoom, Inventory *inv, const char *itemName, const char
         }
     }
     // Use clean cog on machine in Engine Room to get Key Part 3
-    if (stricmp(itemName, "Clean Cog") == 0 && stricmp(targetName, "machine") == 0)
+    if (string_compare(itemName, "Clean Cog") == 0 && string_compare(targetName, "machine") == 0)
     {
-        if (stricmp(currentRoom->name, "Engine Room") == 0)
+        if (string_compare(currentRoom->name, "Engine Room") == 0)
         {
             static bool machineUsed = false;
             if (!machineUsed)
             {
                 printf("You insert the clean cog into the machine. The machinery whirs to life and a hidden compartment opens, revealing the third part of the golden key!\n");
-                Item *keyPart3 = CreateItem("Key Part 3", 1,
-                    "The third part of a three-part golden key.",
-                    true, "Combined Key Parts", "Golden Key");
-                AddItemToRoom(currentRoom, keyPart3);
+                Item *keyPart3 = MakeItem("Key Part 3", 1,
+                                          "The third part of a three-part golden key.",
+                                          true, "Combined Key Parts", "Golden Key");
+                PutItemInRoom(currentRoom, keyPart3);
                 machineUsed = true;
             }
             else
@@ -779,7 +792,7 @@ void UseItem(Room *currentRoom, Inventory *inv, const char *itemName, const char
 }
 
 // Log player actions
-void LogAction(FILE *logFile, const char *action, const char *result)
+void WriteToLog(FILE *logFile, const char *action, const char *result)
 {
     if (!logFile)
         return;
@@ -792,7 +805,7 @@ void LogAction(FILE *logFile, const char *action, const char *result)
 }
 
 // Process player commands
-void ProcessCommand(char *command, Inventory *inv, Room **currentRoom, bool *gameRunning, bool *hasWon, FILE *logFile)
+void DoCommand(char *command, Inventory *inv, Room **currentRoom, bool *gameRunning, bool *hasWon, FILE *logFile)
 {
     char cmd[100];
     char param1[100] = "";
@@ -806,7 +819,7 @@ void ProcessCommand(char *command, Inventory *inv, Room **currentRoom, bool *gam
     int params = sscanf(command, "%s %s %[^\n]", cmd, param1, param2);
     char result[256] = "";
 
-    // Navigation commands
+    // navigation commands
     if (strcmp(cmd, "north") == 0 || strcmp(cmd, "n") == 0)
     {
         if ((*currentRoom)->north != NULL)
@@ -898,48 +911,54 @@ void ProcessCommand(char *command, Inventory *inv, Room **currentRoom, bool *gam
     // Inventory commands
     else if (strcmp(cmd, "inventory") == 0 || strcmp(cmd, "i") == 0)
     {
-        PrintInventory(inv);
+        ShowInventory(inv);
         sprintf(result, "Displayed inventory");
     }
     else if (strcmp(cmd, "pick") == 0 && strcmp(param1, "up") == 0)
     {
         char *itemName = command + strlen("pick up ");
-        while (*itemName == ' ') itemName++;
-        PickupItem(inv, *currentRoom, itemName);
+        while (*itemName == ' ')
+            itemName++;
+        GetItem(inv, *currentRoom, itemName);
         sprintf(result, "Attempted to pick up %s", itemName);
     }
     else if (strcmp(cmd, "take") == 0 && params >= 2)
     {
         char *itemName = command + strlen("take ");
-        while (*itemName == ' ') itemName++;
-        PickupItem(inv, *currentRoom, itemName);
+        while (*itemName == ' ')
+            itemName++;
+        GetItem(inv, *currentRoom, itemName);
         sprintf(result, "Attempted to take %s", itemName);
     }
     else if (strcmp(cmd, "drop") == 0 && params >= 2)
     {
         char *itemName = command + strlen("drop ");
-        while (*itemName == ' ') itemName++;
-        DropItem(inv, *currentRoom, itemName);
+        while (*itemName == ' ')
+            itemName++;
+        ThrowItem(inv, *currentRoom, itemName);
         sprintf(result, "Attempted to drop %s", itemName);
     }
     else if (strcmp(cmd, "examine") == 0 && params >= 2)
     {
         char *itemName = command + strlen("examine ");
-        while (*itemName == ' ') itemName++;
-        ExamineItem(inv, itemName);
+        while (*itemName == ' ')
+            itemName++;
+        LookAtItem(inv, itemName);
         sprintf(result, "Examined %s", itemName);
     }
     else if (strcmp(cmd, "interact") == 0 && params >= 2)
     {
         char *objectName = command + strlen("interact ");
-        while (*objectName == ' ') objectName++;
-        InteractWith(*currentRoom, inv, objectName);
+        while (*objectName == ' ')
+            objectName++;
+        DoInteract(*currentRoom, inv, objectName);
         sprintf(result, "Interacted with %s", objectName);
     }
     else if (strcmp(cmd, "use") == 0 && params >= 3)
     {
         char *args = command + strlen("use ");
-        while (*args == ' ') args++;
+        while (*args == ' ')
+            args++;
         char *lastSpace = strrchr(args, ' ');
         if (lastSpace)
         {
@@ -947,12 +966,12 @@ void ProcessCommand(char *command, Inventory *inv, Room **currentRoom, bool *gam
             *lastSpace = '\0';
             itemName = args;
             targetName = lastSpace + 1;
-            while (*targetName == ' ') targetName++;
+            while (*targetName == ' ')
+                targetName++;
 
             // Fix for known multi-word targets
             if (
-                (strcmp(targetName, "door") == 0 || strcmp(targetName, "pane") == 0)
-            )
+                (strcmp(targetName, "door") == 0 || strcmp(targetName, "pane") == 0))
             {
                 // Move the last word from itemName to targetName
                 char *secondLastSpace = strrchr(itemName, ' ');
@@ -966,7 +985,7 @@ void ProcessCommand(char *command, Inventory *inv, Room **currentRoom, bool *gam
                 }
             }
 
-            UseItem(*currentRoom, inv, itemName, targetName);
+            DoUseItem(*currentRoom, inv, itemName, targetName);
             sprintf(result, "Used %s on %s", itemName, targetName);
         }
         else
@@ -978,39 +997,52 @@ void ProcessCommand(char *command, Inventory *inv, Room **currentRoom, bool *gam
     else if (strcmp(cmd, "combine") == 0 && params >= 3)
     {
         char *args = command + strlen("combine ");
-        while (*args == ' ') args++;
+        while (*args == ' ')
+            args++;
 
         // Find the split point (the space between the two items)
         // We'll split at the first space that is followed by a word that matches an item in inventory
         // But for simplicity, split at the middle space
         char *split = NULL;
         int spaceCount = 0;
-        for (char *p = args; *p; ++p) {
-            if (*p == ' ') spaceCount++;
+        for (char *p = args; *p; ++p)
+        {
+            if (*p == ' ')
+                spaceCount++;
         }
-        if (spaceCount == 0) {
+        if (spaceCount == 0)
+        {
             printf("Usage: combine [item1] [item2]\n");
             sprintf(result, "Incorrect combine command");
-        } else {
+        }
+        else
+        {
             int mid = spaceCount / 2;
             int count = 0;
-            for (char *p = args; *p; ++p) {
-                if (*p == ' ') {
-                    if (count == mid) {
+            for (char *p = args; *p; ++p)
+            {
+                if (*p == ' ')
+                {
+                    if (count == mid)
+                    {
                         split = p;
                         break;
                     }
                     count++;
                 }
             }
-            if (split) {
+            if (split)
+            {
                 *split = '\0';
                 char *item1 = args;
                 char *item2 = split + 1;
-                while (*item2 == ' ') item2++;
-                CombineItems(inv, item1, item2);
+                while (*item2 == ' ')
+                    item2++;
+                MergeItems(inv, item1, item2);
                 sprintf(result, "Combined %s with %s", item1, item2);
-            } else {
+            }
+            else
+            {
                 printf("Usage: combine [item1] [item2]\n");
                 sprintf(result, "Incorrect combine command");
             }
@@ -1019,14 +1051,15 @@ void ProcessCommand(char *command, Inventory *inv, Room **currentRoom, bool *gam
     else if (strcmp(cmd, "push") == 0 && params >= 2)
     {
         char *objectName = command + strlen("push ");
-        while (*objectName == ' ') objectName++;
-        if (stricmp(objectName, "crate") == 0 && strcmp((*currentRoom)->name, "Engine Room") == 0)
+        while (*objectName == ' ')
+            objectName++;
+        if (string_compare(objectName, "crate") == 0 && strcmp((*currentRoom)->name, "Engine Room") == 0)
         {
             printf("You push the crate aside, revealing a rucksack hidden behind it!\n");
-            Item *rucksack = CreateItem("Rucksack", 1,
-                                    "A sturdy rucksack that allows you to carry more items.",
-                                    false, "", "");
-            AddItemToRoom(*currentRoom, rucksack);
+            Item *rucksack = MakeItem("Rucksack", 1,
+                                      "A sturdy rucksack that allows you to carry more items.",
+                                      false, "", "");
+            PutItemInRoom(*currentRoom, rucksack);
             sprintf(result, "Pushed crate, revealed rucksack");
         }
         else
@@ -1123,7 +1156,7 @@ void ProcessCommand(char *command, Inventory *inv, Room **currentRoom, bool *gam
         printf("Unknown command. Type 'help' for a list of commands.\n");
         sprintf(result, "Unknown command");
     }
-    LogAction(logFile, command, result);
+    WriteToLog(logFile, command, result);
 }
 
 int main()
@@ -1138,7 +1171,7 @@ int main()
         return EXIT_FAILURE;
     }
     Inventory playerInventory;
-    InitInventory(&playerInventory);
+    StartInventory(&playerInventory);
 
     // Create rooms
     Room *startingRoom = (Room *)malloc(sizeof(Room));
@@ -1160,14 +1193,14 @@ int main()
     startingRoom->isLocked = false;
     strcpy(startingRoom->keyName, "");
     // Add note to starting room
-    Item *note = CreateItem("Note", 1,
-                            "A faded note that reads: 'The guardian of the jungle seeks wisdom. The answer is Time.'",
-                            false, "", "");
+    Item *note = MakeItem("Note", 1,
+                          "A faded note that reads: 'The guardian of the jungle seeks wisdom. The answer is Time.'",
+                          false, "", "");
     startingRoom->items[startingRoom->itemCount++] = note;
     // Add crate to starting room
-    Interactable *crate = CreateInteractable("Crate",
-                                             "A heavy wooden crate. It looks like it needs a tool to open it.",
-                                             "", "");
+    Interactable *crate = MakeInteractable("Crate",
+                                           "A heavy wooden crate. It looks like it needs a tool to open it.",
+                                           "", "");
     startingRoom->interactables[startingRoom->interactableCount++] = crate;
 
     // Setup jungle room
@@ -1178,24 +1211,24 @@ int main()
     jungleRoom->isLocked = false;
     strcpy(jungleRoom->keyName, "");
     // Add Rusty Cog to jungle room
-    Item *rustyCog = CreateItem("Rusty Cog", 1,
-    "A heavily rusted metal cog. Looks like it could fit into some machinery if it wasn't so rusty.",
-    true, "Anti-Rust Solution", "Clean Cog");
+    Item *rustyCog = MakeItem("Rusty Cog", 1,
+                              "A heavily rusted metal cog. Looks like it could fit into some machinery if it wasn't so rusty.",
+                              true, "Anti-Rust Solution", "Clean Cog");
     jungleRoom->items[jungleRoom->itemCount++] = rustyCog;
     // Add jaguar to jungle room
-    Interactable *jaguar = CreateInteractable("Jaguar",
-                                              "A majestic stone jaguar statue with emerald eyes.",
-                                              "I am always coming but never arrive. What am I?", "Tomorrow");
+    Interactable *jaguar = MakeInteractable("Jaguar",
+                                            "A majestic stone jaguar statue with emerald eyes.",
+                                            "I am always coming but never arrive. What am I?", "Tomorrow");
     jungleRoom->interactables[jungleRoom->interactableCount++] = jaguar;
     // Add chest to jungle room
-    Interactable *chest = CreateInteractable("Chest",
-                                             "A wooden chest guarded by the jaguar statue.",
-                                             "", "");
+    Interactable *chest = MakeInteractable("Chest",
+                                           "A wooden chest guarded by the jaguar statue.",
+                                           "", "");
     jungleRoom->interactables[jungleRoom->interactableCount++] = chest;
     // Add tree to jungle room
-    Interactable *tree = CreateInteractable("Tree",
-                                            "An unusual tree with metal components embedded in its trunk.",
-                                            "", "");
+    Interactable *tree = MakeInteractable("Tree",
+                                          "An unusual tree with metal components embedded in its trunk.",
+                                          "", "");
     jungleRoom->interactables[jungleRoom->interactableCount++] = tree;
 
     // Setup engine room
@@ -1206,14 +1239,14 @@ int main()
     engineRoom->isLocked = false;
     strcpy(engineRoom->keyName, "");
     // Add crate to engine room
-    Interactable *engineCrate = CreateInteractable("Crate",
-                                                   "A heavy crate pushed against the wall. Maybe there's something behind it?",
-                                                   "", "");
+    Interactable *engineCrate = MakeInteractable("Crate",
+                                                 "A heavy crate pushed against the wall. Maybe there's something behind it?",
+                                                 "", "");
     engineRoom->interactables[engineRoom->interactableCount++] = engineCrate;
     // Add machine to engine room
-    Interactable *machine = CreateInteractable("Machine",
-                                               "A complex machine with a slot that seems to fit a cog.",
-                                               "", "");
+    Interactable *machine = MakeInteractable("Machine",
+                                             "A complex machine with a slot that seems to fit a cog.",
+                                             "", "");
     engineRoom->interactables[engineRoom->interactableCount++] = machine;
 
     // Setup cyber room
@@ -1224,14 +1257,14 @@ int main()
     cyberRoom->isLocked = true;
     strcpy(cyberRoom->keyName, "Keycard");
     // Add crowbar container to cyber room
-    Interactable *glassPane = CreateInteractable("Glass Pane",
-                                                 "A reinforced glass pane with a crowbar behind it.",
-                                                 "", "");
+    Interactable *glassPane = MakeInteractable("Glass Pane",
+                                               "A reinforced glass pane with a crowbar behind it.",
+                                               "", "");
     cyberRoom->interactables[cyberRoom->interactableCount++] = glassPane;
     // Add kitchen to cyber room
-    Interactable *kitchen = CreateInteractable("Kitchen",
-                                               "A hi-tech kitchen with various appliances, including a futuristic blender.",
-                                               "", "");
+    Interactable *kitchen = MakeInteractable("Kitchen",
+                                             "A hi-tech kitchen with various appliances, including a futuristic blender.",
+                                             "", "");
     cyberRoom->interactables[cyberRoom->interactableCount++] = kitchen;
 
     // Setup gold room (win condition)
@@ -1288,7 +1321,7 @@ int main()
         printf("\n> ");
         fgets(command, sizeof(command), stdin);
         command[strcspn(command, "\n")] = 0;
-        ProcessCommand(command, &playerInventory, &currentRoom, &gameRunning, &hasWon, logFile);
+        DoCommand(command, &playerInventory, &currentRoom, &gameRunning, &hasWon, logFile);
         if (strcmp(currentRoom->name, "Gold Room") == 0 && !hasWon)
         {
             printf("Congratulations! You've made it to the Gold Room and found the treasure!\n");
