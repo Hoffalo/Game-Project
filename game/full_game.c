@@ -1,3 +1,8 @@
+// Programming Final Project
+// BCSAI - IE University
+// May 19th 2024
+// Lorenzo Hoffman - Salome Shioshvili - Alejandro Zapata - Mohamed Abdelhadi Moumeni
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -485,6 +490,7 @@ void DoInteract(Room *currentRoom, Inventory *inv, const char *objectName)
                 {
                     if (!keyPartTaken)
                     {
+
                         printf("You open the chest and find a piece of golden key!\n");
 
                         // Check if there's space in inventory
@@ -1323,11 +1329,12 @@ int main()
     Room *currentRoom = startingRoom;
 
     // Print welcome message
-    printf("████████ ███████ ███    ███ ██████  ██      ███████      ███████ ███████  ██████ ██████  ███████ ████████ ███████\n");
-    printf("   ██    ██      ████  ████ ██   ██ ██      ██           ██      ██      ██      ██   ██ ██         ██    ██     \n");
-    printf("   ██    █████   ██ ████ ██ ██████  ██      █████        ███████ █████   ██      ██████  █████      ██    ███████\n");
-    printf("   ██    ██      ██  ██  ██ ██      ██      ██                ██ ██      ██      ██   ██ ██         ██         ██\n");
-    printf("   ██    ███████ ██      ██ ██      ███████ ███████      ███████ ███████  ██████ ██   ██ ███████    ██    ███████\n");
+    printf(" ████████╗███████╗███╗░░░███╗██████╗░██╗░░░░░███████╗░░░░░░░░██████╗███████╗░█████╗ ░██████╗░███████╗████████╗░██████╗\n");
+    printf( "╚══██╔══╝██╔════╝████╗░████║██╔══██╗██║░░░░░██╔════╝░░░░░░░██╔════╝██╔════╝██╔══██╗ ██╔══██╗██╔════╝╚══██╔══╝██╔════╝\n");
+    printf(" ░░░██║░░░█████╗░░██╔████╔██║██████╔╝██║░░░░░█████╗░░░░░░░░░╚█████╗░█████╗░░██║░░╚═ ╝██████╔╝█████╗░░░░░██║░░░╚█████╗░\n");
+    printf(" ░░░██║░░░██╔══╝░░██║╚██╔╝██║██╔═══╝░██║░░░░░██╔══╝░░░░░░░░░░╚═══██╗██╔══╝░░██║░░██╗ ██╔══██╗██╔══╝░░░░░██║░░░░╚═══██╗\n");
+    printf(" ░░░██║░░░███████╗██║░╚═╝░██║██║░░░░░███████╗███████╗░░░░░░░██████╔╝███████╗╚█████╔╝ ██║░░██║███████╗░░░██║░░░██████╔╝\n");
+    printf(" ░░░╚═╝░░░╚══════╝╚═╝░░░░░╚═╝╚═╝░░░░░╚══════╝╚══════╝░░░░░░░░═════╝░╚══════╝░╚════╝░ ╚═╝░░╚═╝╚══════╝░░░╚═╝░░░╚═════╝░\n");
     printf("Welcome to the Temple of Secrets!\n");
     printf("You are an explorer seeking the treasures of an ancient temple.\n");
     printf("Navigate through the rooms, solve puzzles, and find the golden key to win!\n");
